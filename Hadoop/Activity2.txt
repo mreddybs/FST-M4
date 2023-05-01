@@ -1,0 +1,24 @@
+root@44db22331353:/# vim file01.txt
+root@44db22331353:/# cat file01.txt
+Hello World Bye World
+
+root@44db22331353:/# hdfs dfs -put ./file01.txt /user/root/
+root@44db22331353:/# vim wordcount.pig
+root@44db22331353:/# cat wordcount.pig
+-- Load input file from HDFS
+inputFile = LOAD 'hdfs:///user/maninder/file01.txt' AS (line);
+-- Tokeize each word in the file (Map)
+words = FOREACH inputFile GENERATE FLATTEN(TOKENIZE(line)) AS word;
+-- Combine the words from the above stage
+grpd = GROUP words BY word;
+-- Count the occurence of each word (Reduce)
+cntd = FOREACH grpd GENERATE group, COUNT(words);
+-- Store the result in HDFS
+STORE cntd INTO 'hdfs:///user/root/results';
+
+root@44db22331353:/# pig wordcount.pig
+root@44db22331353:/# hdfs dfs -cat /user/root/results/part-r-00000
+Bye     1
+Hello   1
+World   2
+root@44db22331353:/#
